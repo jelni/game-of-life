@@ -26,11 +26,11 @@ pub struct Game {
 
 impl Game {
     pub fn new() -> Self {
-        let mut board = Board::new((64, 64));
+        let mut board = Board::new((64, 64), 0);
 
         for (y, row) in GLIDER_GUN.into_iter().enumerate() {
             for &x in row {
-                board.set_cell((x, y), true);
+                board.set_cell((x + 16, y + 16), true);
             }
         }
 
@@ -106,17 +106,25 @@ impl Game {
     }
 
     fn draw(&self) {
-        for (x, y) in self.board.cells() {
-            #[allow(clippy::cast_precision_loss)]
-            shapes::draw_rectangle(
-                (self.scale * x) as f32,
-                (self.scale * y) as f32,
-                self.scale as f32,
-                self.scale as f32,
-                WHITE,
-            );
-        }
+        let population = self
+            .board
+            .cells()
+            .map(|(x, y)| {
+                #[allow(clippy::cast_precision_loss)]
+                shapes::draw_rectangle(
+                    (self.scale * x) as f32,
+                    (self.scale * y) as f32,
+                    self.scale as f32,
+                    self.scale as f32,
+                    WHITE,
+                );
+            })
+            .count();
 
-        text::draw_text(&time::get_fps().to_string(), 0., 8., 16., GRAY);
+        let board_size = self.board.size();
+        text::draw_text(&format!("FPS: {}", time::get_fps()), 0., 12., 16., GRAY);
+        text::draw_text(&format!("Time: {}", self.board.time()), 0., 24., 16., GRAY);
+        text::draw_text(&format!("Population: {population}"), 0., 36., 16., GRAY);
+        text::draw_text(&format!("Board size: {board_size:?}"), 0., 48., 16., GRAY);
     }
 }
