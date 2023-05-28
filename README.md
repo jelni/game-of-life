@@ -9,6 +9,8 @@ structure.
 The use of a quadtree makes the board size not impact performance. It's
 dynamically resized to the viewport.
 
+![Screenshot of the program showing a Gosper's glider gun](https://github.com/jelni/game-of-life/assets/25802745/9177d5a4-2fb3-42cf-8871-4c827e83f0ba)
+
 ## Interactions
 
 -   Right mouse button – add cells
