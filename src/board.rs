@@ -76,6 +76,19 @@ impl Board {
         new_board
     }
 
+    pub fn resize_board(&self, new_size: (usize, usize)) -> Self {
+        let mut new_board = Board::new(new_size, self.time);
+
+        for position in self
+            .cells()
+            .filter(|&(x, y)| x < new_size.0 && y < new_size.1)
+        {
+            new_board.set_cell(position, true);
+        }
+
+        new_board
+    }
+
     pub fn cells(&self) -> impl Iterator<Item = (usize, usize)> {
         self.state
             .all_nodes()

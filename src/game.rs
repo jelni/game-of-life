@@ -52,14 +52,14 @@ impl Game {
     }
 
     fn simulate(&mut self) {
-        if !self.paused {
-            self.board = self.board.next_state(
-                #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                (
-                    (window::screen_width() as usize / self.scale).next_power_of_two(),
-                    (window::screen_height() as usize / self.scale).next_power_of_two(),
-                ),
-            );
+        let expected_size = self.optimal_board_size();
+
+        if self.paused {
+            if self.board.size() != expected_size {
+                self.board = self.board.resize_board(expected_size);
+            }
+        } else {
+            self.board = self.board.next_state(expected_size);
         }
     }
 
@@ -126,5 +126,13 @@ impl Game {
         text::draw_text(&format!("Time: {}", self.board.time()), 0., 24., 16., GRAY);
         text::draw_text(&format!("Population: {population}"), 0., 36., 16., GRAY);
         text::draw_text(&format!("Board size: {board_size:?}"), 0., 48., 16., GRAY);
+    }
+
+    fn optimal_board_size(&self) -> (usize, usize) {
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        (
+            (window::screen_width() as usize / self.scale).next_power_of_two(),
+            (window::screen_height() as usize / self.scale).next_power_of_two(),
+        )
     }
 }
