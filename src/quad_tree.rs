@@ -1,7 +1,7 @@
 use std::iter;
 
 pub struct QuadTree<T> {
-    size: usize,
+    size: (usize, usize),
     anchor: (usize, usize),
     position: (usize, usize),
     value: T,
@@ -9,13 +9,19 @@ pub struct QuadTree<T> {
 }
 
 impl<T: Copy> QuadTree<T> {
-    pub fn new(size: usize, position: (usize, usize), value: T) -> Self {
-        assert_eq!(size.count_ones(), 1, "size must be a power of 2");
+    pub fn new(size: (usize, usize), position: (usize, usize), value: T) -> Self {
+        assert_eq!(size.0.count_ones(), 1, "size.0 must be a power of 2");
+        assert_eq!(size.1.count_ones(), 1, "size.1 must be a power of 2");
 
         Self::new_node(size, position, (0, 0), value)
     }
 
-    fn new_node(size: usize, position: (usize, usize), anchor: (usize, usize), value: T) -> Self {
+    fn new_node(
+        size: (usize, usize),
+        position: (usize, usize),
+        anchor: (usize, usize),
+        value: T,
+    ) -> Self {
         Self {
             size,
             anchor,
@@ -25,22 +31,34 @@ impl<T: Copy> QuadTree<T> {
         }
     }
 
-    pub fn get(&self, position: (usize, usize)) -> Option<T> {
-        if position == self.position {
-            return Some(self.value);
-        }
-
-        let index = match (
-            position.0 < self.anchor.0 + self.size / 2,
-            position.1 < self.anchor.1 + self.size / 2,
+    fn child_index(&self, position: (usize, usize)) -> usize {
+        match (
+            position.0 < self.anchor.0 + self.size.0 / 2,
+            position.1 < self.anchor.1 + self.size.1 / 2,
         ) {
             (true, true) => 0,
             (true, false) => 1,
             (false, true) => 2,
             (false, false) => 3,
-        };
+        }
+    }
 
+    pub fn get(&self, position: (usize, usize)) -> Option<T> {
+        if position == self.position {
+            return Some(self.value);
+        }
+
+        let index = self.child_index(position);
         self.children[index].as_ref()?.get(position)
+    }
+
+    pub fn get_mut(&mut self, position: (usize, usize)) -> Option<&mut T> {
+        if position == self.position {
+            return Some(&mut self.value);
+        }
+
+        let index = self.child_index(position);
+        self.children[index].as_mut()?.get_mut(position)
     }
 
     pub fn insert(&mut self, position: (usize, usize), value: T) {
@@ -49,25 +67,32 @@ impl<T: Copy> QuadTree<T> {
             return;
         }
 
-        let (index, anchor) = match (
-            position.0 < self.anchor.0 + self.size / 2,
-            position.1 < self.anchor.1 + self.size / 2,
-        ) {
-            (true, true) => (0, self.anchor),
-            (true, false) => (1, (self.anchor.0, self.anchor.1 + self.size / 2)),
-            (false, true) => (2, (self.anchor.0 + self.size / 2, self.anchor.1)),
-            (false, false) => (
-                3,
-                (self.anchor.0 + self.size / 2, self.anchor.1 + self.size / 2),
-            ),
-        };
+        let index = self.child_index(position);
 
         match self.children.get_mut(index).unwrap() {
             Some(child) => {
                 child.insert(position, value);
             }
             None => {
-                self.children[index] = Some(Self::new_node(self.size / 2, position, anchor, value));
+                let anchor = (
+                    if position.0 < self.anchor.0 + self.size.0 / 2 {
+                        self.anchor.0
+                    } else {
+                        self.anchor.0 + self.size.0 / 2
+                    },
+                    if position.1 < self.anchor.1 + self.size.1 / 2 {
+                        self.anchor.1
+                    } else {
+                        self.anchor.1 + self.size.1 / 2
+                    },
+                );
+
+                self.children[index] = Some(Self::new_node(
+                    (self.size.0 / 2, self.size.1 / 2),
+                    position,
+                    anchor,
+                    value,
+                ));
             }
         }
     }
@@ -78,7 +103,7 @@ impl<T: Copy> QuadTree<T> {
             .collect()
     }
 
-    pub fn size(&self) -> usize {
+    pub fn size(&self) -> (usize, usize) {
         self.size
     }
 }

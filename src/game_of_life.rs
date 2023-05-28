@@ -18,7 +18,7 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new(size: usize) -> Self {
+    pub fn new(size: (usize, usize)) -> Self {
         Self {
             state: QuadTree::new(size, (0, 0), false),
         }
@@ -28,27 +28,29 @@ impl Board {
         self.state.insert(position, value);
     }
 
-    pub fn next_state(&self, new_size: usize) -> Self {
+    pub fn next_state(&self, new_size: (usize, usize)) -> Self {
         let mut counts = QuadTree::new(new_size, (0, 0), 0);
 
         for (x, y) in self.cells() {
             for dir in DIRECTIONS {
                 if dir.0 == 0 && x == 0
                     || dir.1 == 0 && y == 0
-                    || dir.0 == 2 && x == self.state.size() - 1
-                    || dir.1 == 2 && y == self.state.size() - 1
+                    || dir.0 == 2 && x == self.state.size().0 - 1
+                    || dir.1 == 2 && y == self.state.size().1 - 1
                 {
                     continue;
                 }
 
                 let position = ((x + dir.0 - 1), (y + dir.1 - 1));
 
-                if position.0 > new_size || position.1 > new_size {
+                if position.0 >= new_size.0 || position.1 >= new_size.1 {
                     continue;
                 }
 
-                let count = counts.get(position).unwrap_or(0);
-                counts.insert(position, count + 1);
+                match counts.get_mut(position) {
+                    Some(count) => *count += 1,
+                    None => counts.insert(position, 1),
+                }
             }
         }
 

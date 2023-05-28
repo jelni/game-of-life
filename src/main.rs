@@ -24,7 +24,7 @@ async fn main() {
     window::request_new_screen_size(512., 512.);
     window::next_frame().await;
 
-    let mut board = Board::new(128);
+    let mut board = Board::new((64, 64));
 
     for (y, row) in GLIDER_GUN.into_iter().enumerate() {
         for &x in row {
@@ -33,19 +33,12 @@ async fn main() {
     }
 
     loop {
-        let screen_width = window::screen_width();
-        let screen_height = window::screen_height();
-
-        #[allow(clippy::float_cmp)]
-        if screen_width != screen_height {
-            let size = screen_width.min(1024.);
-            window::request_new_screen_size(size, size);
-            window::next_frame().await;
-        }
-
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         {
-            board = board.next_state((screen_width as usize / 4).next_power_of_two());
+            board = board.next_state((
+                (window::screen_width() as usize / 4).next_power_of_two(),
+                (window::screen_height() as usize / 4).next_power_of_two(),
+            ));
         }
         window::clear_background(BLACK);
 
