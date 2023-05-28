@@ -1,7 +1,7 @@
 #![warn(clippy::pedantic)]
 
 use game_of_life::Board;
-use macroquad::prelude::{MouseButton, BLACK, GRAY, WHITE};
+use macroquad::prelude::{KeyCode, MouseButton, BLACK, GRAY, WHITE};
 use macroquad::window::Conf;
 use macroquad::{input, shapes, text, time, window, Window};
 
@@ -41,16 +41,23 @@ async fn run() {
         }
     }
 
+    let mut paused = false;
     let mut scale = 4;
 
     loop {
-        board = board.next_state(
-            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-            (
-                (window::screen_width() as usize / scale).next_power_of_two(),
-                (window::screen_height() as usize / scale).next_power_of_two(),
-            ),
-        );
+        if !paused {
+            board = board.next_state(
+                #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                (
+                    (window::screen_width() as usize / scale).next_power_of_two(),
+                    (window::screen_height() as usize / scale).next_power_of_two(),
+                ),
+            );
+        }
+
+        if input::is_key_pressed(KeyCode::Space) {
+            paused = !paused;
+        }
 
         let scroll = input::mouse_wheel().1;
         if scroll != 0. {
