@@ -1,0 +1,27 @@
+name: Deploy
+
+on: push
+
+permissions:
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: rustup target add wasm32-unknown-unknown
+      - uses: actions/checkout@main
+      - run: cargo build --release --target wasm32-unknown-unknown
+      - run: mv target/wasm32-unknown-unknown/release/game-of-life.wasm
+          public/game-of-life.wasm
+      - uses: actions/upload-pages-artifact@main
+        with:
+          path: "public"
+      - id: deployment
+        uses: actions/deploy-pages@main
