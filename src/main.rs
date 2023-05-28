@@ -1,7 +1,7 @@
 #![warn(clippy::pedantic)]
 
 use game_of_life::Board;
-use macroquad::prelude::{BLACK, GRAY, WHITE};
+use macroquad::prelude::{MouseButton, BLACK, GRAY, WHITE};
 use macroquad::window::Conf;
 use macroquad::{input, shapes, text, time, window, Window};
 
@@ -44,13 +44,13 @@ async fn run() {
     let mut scale = 4;
 
     loop {
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        {
-            board = board.next_state((
+        board = board.next_state(
+            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            (
                 (window::screen_width() as usize / scale).next_power_of_two(),
                 (window::screen_height() as usize / scale).next_power_of_two(),
-            ));
-        }
+            ),
+        );
 
         let scroll = input::mouse_wheel().1;
         if scroll != 0. {
@@ -59,6 +59,16 @@ async fn run() {
             } else {
                 (scale / 2).max(1)
             };
+        }
+
+        let left_button = input::is_mouse_button_down(MouseButton::Left);
+        let right_button = input::is_mouse_button_down(MouseButton::Right);
+
+        if left_button || right_button {
+            let position = input::mouse_position();
+            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            let position = (position.0 as usize / scale, position.1 as usize / scale);
+            board.set_cell(position, left_button);
         }
 
         window::clear_background(BLACK);
