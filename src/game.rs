@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::mem;
 
 use macroquad::prelude::{KeyCode, MouseButton, GRAY, WHITE};
 use macroquad::{input, shapes, text, time, window};
@@ -71,6 +72,12 @@ impl Game {
             }
 
             self.paused = !self.paused;
+        }
+
+        if self.paused && input::is_key_pressed(KeyCode::N) {
+            let mut board = self.board.next_state(self.optimal_board_size());
+            mem::swap(&mut board, &mut self.board);
+            self.last_states.push_front(board);
         }
 
         if input::is_key_pressed(KeyCode::Z) && input::is_key_down(KeyCode::LeftControl)
