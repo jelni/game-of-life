@@ -1,5 +1,6 @@
 use std::iter;
 
+#[derive(Clone)]
 pub struct QuadTree<T> {
     size: (usize, usize),
     anchor: (usize, usize),

@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use macroquad::prelude::{KeyCode, MouseButton, GRAY, WHITE};
 use macroquad::{input, shapes, text, time, window};
 
@@ -19,6 +21,7 @@ pub struct Game {
     paused: bool,
     scale: usize,
     board: Board,
+    last_states: VecDeque<Board>,
 }
 
 impl Game {
@@ -35,6 +38,7 @@ impl Game {
             paused: true,
             scale: 4,
             board,
+            last_states: VecDeque::new(),
         }
     }
 
@@ -61,7 +65,21 @@ impl Game {
 
     fn handle_input(&mut self) {
         if input::is_key_pressed(KeyCode::Space) {
+            if self.paused {
+                self.last_states.push_front(self.board.clone());
+                self.last_states.truncate(64);
+            }
+
             self.paused = !self.paused;
+        }
+
+        if input::is_key_pressed(KeyCode::Z) && input::is_key_down(KeyCode::LeftControl)
+            || input::is_key_down(KeyCode::RightControl)
+        {
+            if let Some(last_state) = self.last_states.pop_front() {
+                self.board = last_state;
+                self.paused = true;
+            }
         }
 
         let scroll = input::mouse_wheel().1;

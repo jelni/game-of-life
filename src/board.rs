@@ -13,6 +13,7 @@ const DIRECTIONS: [(usize, usize); 8] = [
     (2, 2),
 ];
 
+#[derive(Clone)]
 pub struct Board {
     state: QuadTree<bool>,
 }
