@@ -5,6 +5,7 @@ use macroquad::prelude::{KeyCode, MouseButton, GRAY, WHITE};
 use macroquad::{input, shapes, text, time, window};
 
 use crate::board::Board;
+use crate::quad_tree::Point;
 
 const GLIDER_GUN: [&[usize]; 9] = [
     &[24],
@@ -27,11 +28,15 @@ pub struct Game {
 
 impl Game {
     pub fn new() -> Self {
-        let mut board = Board::new((64, 64), 0);
+        let mut board = Board::new();
 
         for (y, row) in GLIDER_GUN.into_iter().enumerate() {
             for &x in row {
-                board.set_cell((x + 16, y + 16), true);
+                let position = Point {
+                    x: x + 16,
+                    y: y + 16,
+                };
+                board.set_cell(position, true);
             }
         }
 
@@ -53,14 +58,8 @@ impl Game {
     }
 
     fn simulate(&mut self) {
-        let expected_size = self.optimal_board_size();
-
-        if self.paused {
-            if self.board.size() != expected_size {
-                self.board = self.board.resize_board(expected_size);
-            }
-        } else {
-            self.board = self.board.next_state(expected_size);
+        if !self.paused {
+            self.board = self.board.next_state();
         }
     }
 
@@ -75,7 +74,7 @@ impl Game {
         }
 
         if self.paused && input::is_key_pressed(KeyCode::N) {
-            let mut board = self.board.next_state(self.optimal_board_size());
+            let mut board = self.board.next_state();
             mem::swap(&mut board, &mut self.board);
             self.last_states.push_front(board);
         }
@@ -104,10 +103,10 @@ impl Game {
         if left_button || right_button {
             let position = input::mouse_position();
             #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-            let position = (
-                position.0 as usize / self.scale,
-                position.1 as usize / self.scale,
-            );
+            let position = Point {
+                x: position.0 as usize / self.scale,
+                y: position.1 as usize / self.scale,
+            };
             self.board.set_cell(position, left_button);
         }
     }
@@ -116,11 +115,11 @@ impl Game {
         let population = self
             .board
             .cells()
-            .map(|(x, y)| {
+            .map(|cell| {
                 #[allow(clippy::cast_precision_loss)]
                 shapes::draw_rectangle(
-                    (self.scale * x) as f32,
-                    (self.scale * y) as f32,
+                    (self.scale * cell.x) as f32,
+                    (self.scale * cell.y) as f32,
                     self.scale as f32,
                     self.scale as f32,
                     WHITE,
@@ -128,18 +127,12 @@ impl Game {
             })
             .count();
 
-        let board_size = self.board.size();
         text::draw_text(&format!("FPS: {}", time::get_fps()), 0., 12., 16., GRAY);
         text::draw_text(&format!("Time: {}", self.board.time()), 0., 24., 16., GRAY);
         text::draw_text(&format!("Population: {population}"), 0., 36., 16., GRAY);
-        text::draw_text(&format!("Board size: {board_size:?}"), 0., 48., 16., GRAY);
-    }
-
-    fn optimal_board_size(&self) -> (usize, usize) {
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        (
-            (window::screen_width() as usize / self.scale).next_power_of_two(),
-            (window::screen_height() as usize / self.scale).next_power_of_two(),
-        )
+        text::draw_text(&format!("Scale: {}", self.scale), 0., 48., 16., GRAY);
+        if self.paused {
+            text::draw_text("[Paused]", 0., 60., 16., GRAY);
+        }
     }
 }

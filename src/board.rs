@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::quad_tree::QuadTree;
+use crate::quad_tree::{Point, PointQuadtree};
 
 const DIRECTIONS: [(usize, usize); 8] = [
     (0, 0),
@@ -16,37 +16,40 @@ const DIRECTIONS: [(usize, usize); 8] = [
 #[derive(Clone)]
 pub struct Board {
     time: u32,
-    state: QuadTree<bool>,
+    state: PointQuadtree<bool>,
 }
 
 impl Board {
-    pub fn new(size: (usize, usize), time: u32) -> Self {
+    pub fn new() -> Self {
+        Self::new_with_time(0)
+    }
+
+    fn new_with_time(time: u32) -> Self {
         Self {
             time,
-            state: QuadTree::new(size, (0, 0), false),
+            state: PointQuadtree::new(Point { x: 0, y: 0 }, false),
         }
     }
 
-    pub fn set_cell(&mut self, position: (usize, usize), value: bool) {
+    pub fn set_cell(&mut self, position: Point, value: bool) {
         self.state.insert(position, value);
     }
 
-    pub fn next_state(&self, new_size: (usize, usize)) -> Self {
-        let mut counts = QuadTree::new(new_size, (0, 0), 0);
+    pub fn next_state(&self) -> Self {
+        let mut counts = PointQuadtree::new(Point { x: 0, y: 0 }, 0);
 
-        for (x, y) in self.cells() {
+        for cell in self.cells() {
             for dir in DIRECTIONS {
-                if dir.0 == 0 && x == 0
-                    || dir.1 == 0 && y == 0
-                    || dir.0 == 2 && x == self.size().0 - 1
-                    || dir.1 == 2 && y == self.size().1 - 1
-                {
+                if dir.0 == 0 && cell.x == 0 || dir.1 == 0 && cell.y == 0 {
                     continue;
                 }
 
-                let position = ((x + dir.0 - 1), (y + dir.1 - 1));
+                let position = Point {
+                    x: cell.x + dir.0 - 1,
+                    y: cell.y + dir.1 - 1,
+                };
 
-                if position.0 >= new_size.0 || position.1 >= new_size.1 {
+                if position.x >= 1024 || position.y >= 1024 {
                     continue;
                 }
 
@@ -57,39 +60,26 @@ impl Board {
             }
         }
 
-        let mut new_board = Board::new(new_size, self.time + 1);
+        let mut new_board = Board::new_with_time(self.time + 1);
 
-        for ((x, y), count) in counts.all_nodes() {
+        for (position, count) in counts.all_nodes() {
             if count == 0 {
                 continue;
             }
 
             let value = match count.cmp(&2) {
                 Ordering::Less => false,
-                Ordering::Equal => self.state.get((x, y)).unwrap_or(false),
+                Ordering::Equal => self.state.get(position).unwrap_or(false),
                 Ordering::Greater => count == 3,
             };
 
-            new_board.set_cell((x, y), value);
+            new_board.set_cell(position, value);
         }
 
         new_board
     }
 
-    pub fn resize_board(&self, new_size: (usize, usize)) -> Self {
-        let mut new_board = Board::new(new_size, self.time);
-
-        for position in self
-            .cells()
-            .filter(|&(x, y)| x < new_size.0 && y < new_size.1)
-        {
-            new_board.set_cell(position, true);
-        }
-
-        new_board
-    }
-
-    pub fn cells(&self) -> impl Iterator<Item = (usize, usize)> {
+    pub fn cells(&self) -> impl Iterator<Item = Point> {
         self.state
             .all_nodes()
             .into_iter()
@@ -99,9 +89,5 @@ impl Board {
 
     pub fn time(&self) -> u32 {
         self.time
-    }
-
-    pub fn size(&self) -> (usize, usize) {
-        self.state.size()
     }
 }
