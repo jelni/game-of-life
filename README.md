@@ -3,13 +3,13 @@
 I haven't programmed a Game of Life before, so here's my attempt:
 
 [Conway's Game of Life](https://wikipedia.org/wiki/Conway%27s_Game_of_Life) Rust
-implementation using a [Quadtree](https://wikipedia.org/wiki/Quadtree) data
+implementation using a
+[point quadtree](https://wikipedia.org/wiki/Quadtree#Point_quadtree) data
 structure.
 
-The use of a quadtree makes the board size not impact performance. It's
-dynamically resized to the viewport.
+The use of a quadtree allows the board to be infinite.
 
-![Screenshot of the program showing a Gosper's glider gun](https://github.com/jelni/game-of-life/assets/25802745/9177d5a4-2fb3-42cf-8871-4c827e83f0ba)
+![Screenshot of the program showing a Gosper's glider gun](https://github.com/jelni/game-of-life/assets/25802745/b2b9f12f-f097-4e7e-a405-3e230640680c)
 
 ## Interactions
 
@@ -20,7 +20,7 @@ dynamically resized to the viewport.
 -   <kbd>N</kbd> – go forward one step
 -   <kbd>Ctrl</kbd>+<kbd>Z</kbd> – go back to the last resume state
 
-## Thoughts about the [`macroquad`](https://github.com/not-fl3/macroquad) crate
+## Thoughts on the [`macroquad`](https://github.com/not-fl3/macroquad) crate
 
 This crate is easy to use and renders the screen using a GPU shader, but I don't
 like how there's an implicit global window instance and that every value (window
