@@ -2,8 +2,8 @@ use std::collections::VecDeque;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Point {
-    pub x: u16,
-    pub y: u16,
+    pub x: i16,
+    pub y: i16,
 }
 
 #[derive(Clone)]

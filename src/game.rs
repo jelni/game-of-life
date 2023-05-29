@@ -7,7 +7,7 @@ use macroquad::{input, shapes, text, time, window};
 use crate::board::Board;
 use crate::quad_tree::Point;
 
-const GLIDER_GUN: [&[u16]; 9] = [
+const GLIDER_GUN: [&[i16]; 9] = [
     &[24],
     &[22, 24],
     &[12, 13, 20, 21, 34, 35],
@@ -113,10 +113,10 @@ impl Game {
         let middle_button = input::is_mouse_button_down(MouseButton::Middle);
 
         if left_button || right_button {
-            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            #[allow(clippy::cast_possible_truncation)]
             let position = Point {
-                x: (mouse_position.0 / self.scale + self.offset.0) as u16,
-                y: (mouse_position.1 / self.scale + self.offset.1) as u16,
+                x: (mouse_position.0 / self.scale + self.offset.0) as i16,
+                y: (mouse_position.1 / self.scale + self.offset.1) as i16,
             };
             self.board.set_cell(position, left_button);
         }

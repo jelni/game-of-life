@@ -2,15 +2,15 @@ use std::cmp::Ordering;
 
 use crate::quad_tree::{Point, PointQuadtree};
 
-const DIRECTIONS: [(u16, u16); 8] = [
-    (0, 0),
+const DIRECTIONS: [(i16, i16); 8] = [
+    (-1, -1),
+    (-1, 0),
+    (-1, 1),
+    (0, -1),
     (0, 1),
-    (0, 2),
+    (1, -1),
     (1, 0),
-    (1, 2),
-    (2, 0),
-    (2, 1),
-    (2, 2),
+    (1, 1),
 ];
 
 #[derive(Clone)]
@@ -41,8 +41,8 @@ impl Board {
         for cell in self.cells() {
             for dir in DIRECTIONS {
                 let position = Point {
-                    x: (cell.x.wrapping_add(dir.0)).wrapping_sub(1),
-                    y: (cell.y.wrapping_add(dir.1)).wrapping_sub(1),
+                    x: (cell.x.wrapping_add(dir.0)),
+                    y: (cell.y.wrapping_add(dir.1)),
                 };
 
                 match counts.get_mut(position) {
