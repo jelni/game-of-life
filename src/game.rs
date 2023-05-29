@@ -7,7 +7,7 @@ use macroquad::{input, shapes, text, time, window};
 use crate::board::Board;
 use crate::quad_tree::Point;
 
-const GLIDER_GUN: [&[usize]; 9] = [
+const GLIDER_GUN: [&[u16]; 9] = [
     &[24],
     &[22, 24],
     &[12, 13, 20, 21, 34, 35],
@@ -21,7 +21,7 @@ const GLIDER_GUN: [&[usize]; 9] = [
 
 pub struct Game {
     paused: bool,
-    scale: usize,
+    scale: f32,
     board: Board,
     last_states: VecDeque<Board>,
 }
@@ -30,7 +30,7 @@ impl Game {
     pub fn new() -> Self {
         let mut board = Board::new();
 
-        for (y, row) in GLIDER_GUN.into_iter().enumerate() {
+        for (row, y) in GLIDER_GUN.into_iter().zip(0..) {
             for &x in row {
                 let position = Point {
                     x: x + 16,
@@ -42,7 +42,7 @@ impl Game {
 
         Self {
             paused: true,
-            scale: 4,
+            scale: 4.,
             board,
             last_states: VecDeque::new(),
         }
@@ -91,9 +91,9 @@ impl Game {
         let scroll = input::mouse_wheel().1;
         if scroll != 0. {
             self.scale = if scroll.is_sign_positive() {
-                (self.scale * 2).min(16)
+                (self.scale * 2.).min(16.)
             } else {
-                (self.scale / 2).max(1)
+                (self.scale / 2.).max(1.)
             };
         }
 
@@ -104,8 +104,8 @@ impl Game {
             let position = input::mouse_position();
             #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
             let position = Point {
-                x: position.0 as usize / self.scale,
-                y: position.1 as usize / self.scale,
+                x: (position.0 / self.scale) as u16,
+                y: (position.1 / self.scale) as u16,
             };
             self.board.set_cell(position, left_button);
         }
@@ -118,10 +118,10 @@ impl Game {
             .map(|cell| {
                 #[allow(clippy::cast_precision_loss)]
                 shapes::draw_rectangle(
-                    (self.scale * cell.x) as f32,
-                    (self.scale * cell.y) as f32,
-                    self.scale as f32,
-                    self.scale as f32,
+                    self.scale * f32::from(cell.x),
+                    self.scale * f32::from(cell.y),
+                    self.scale,
+                    self.scale,
                     WHITE,
                 );
             })

@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use crate::quad_tree::{Point, PointQuadtree};
 
-const DIRECTIONS: [(usize, usize); 8] = [
+const DIRECTIONS: [(u16, u16); 8] = [
     (0, 0),
     (0, 1),
     (0, 2),
@@ -36,25 +36,17 @@ impl Board {
     }
 
     pub fn next_state(&self) -> Self {
-        let mut counts = PointQuadtree::new(Point { x: 0, y: 0 }, 0);
+        let mut counts = PointQuadtree::<u8>::new(Point { x: 0, y: 0 }, 0);
 
         for cell in self.cells() {
             for dir in DIRECTIONS {
-                if dir.0 == 0 && cell.x == 0 || dir.1 == 0 && cell.y == 0 {
-                    continue;
-                }
-
                 let position = Point {
-                    x: cell.x + dir.0 - 1,
-                    y: cell.y + dir.1 - 1,
+                    x: (cell.x.wrapping_add(dir.0)).wrapping_sub(1),
+                    y: (cell.y.wrapping_add(dir.1)).wrapping_sub(1),
                 };
 
-                if position.x >= 1024 || position.y >= 1024 {
-                    continue;
-                }
-
                 match counts.get_mut(position) {
-                    Some(count) => *count += 1,
+                    Some(count) => *count = count.wrapping_add(1),
                     None => counts.insert(position, 1),
                 }
             }
