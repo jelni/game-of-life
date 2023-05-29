@@ -15,7 +15,8 @@ The use of a quadtree allows the board to be infinite.
 
 -   Right mouse button – add cells
 -   Left mouse button – remove cells
--   Mouse wheel – change the scale
+-   Middle mouse button – pan
+-   Mouse wheel – zoom in and out
 -   <kbd>Space</kbd> – pause or resume
 -   <kbd>N</kbd> – go forward one step
 -   <kbd>Ctrl</kbd>+<kbd>Z</kbd> – go back to the last resume state
