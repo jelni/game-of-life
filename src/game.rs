@@ -21,7 +21,9 @@ const GLIDER_GUN: [&[u16]; 9] = [
 
 pub struct Game {
     paused: bool,
+    offset: (f32, f32),
     scale: f32,
+    previous_mouse_position: (f32, f32),
     board: Board,
     last_states: VecDeque<Vec<Point>>,
 }
@@ -42,7 +44,9 @@ impl Game {
 
         Self {
             paused: true,
+            offset: (0., 0.),
             scale: 4.,
+            previous_mouse_position: (0., 0.),
             board,
             last_states: VecDeque::new(),
         }
@@ -89,25 +93,43 @@ impl Game {
 
         let scroll = input::mouse_wheel().1;
         if scroll != 0. {
-            self.scale = if scroll.is_sign_positive() {
-                (self.scale * 2.).min(16.)
-            } else {
-                (self.scale / 2.).max(1.)
+            let mouse_position = input::mouse_position();
+            if scroll.is_sign_positive() {
+                if self.scale < 16. {
+                    self.scale *= 2.;
+                    self.offset.0 += mouse_position.0 / self.scale;
+                    self.offset.1 += mouse_position.1 / self.scale;
+                }
+            } else if self.scale > 0.125 {
+                self.offset.0 -= mouse_position.0 / self.scale;
+                self.offset.1 -= mouse_position.1 / self.scale;
+                self.scale /= 2.;
             };
         }
 
+        let mouse_position = input::mouse_position();
         let left_button = input::is_mouse_button_down(MouseButton::Left);
         let right_button = input::is_mouse_button_down(MouseButton::Right);
+        let middle_button = input::is_mouse_button_down(MouseButton::Middle);
 
         if left_button || right_button {
-            let position = input::mouse_position();
             #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
             let position = Point {
-                x: (position.0 / self.scale) as u16,
-                y: (position.1 / self.scale) as u16,
+                x: (mouse_position.0 / self.scale + self.offset.0) as u16,
+                y: (mouse_position.1 / self.scale + self.offset.1) as u16,
             };
             self.board.set_cell(position, left_button);
         }
+
+        if middle_button {
+            self.offset.0 += (self.previous_mouse_position.0 - mouse_position.0) / self.scale;
+            self.offset.1 += (self.previous_mouse_position.1 - mouse_position.1) / self.scale;
+        }
+
+        self.previous_mouse_position = mouse_position;
+
+        self.offset.0 = (self.offset.0 * self.scale).round() / self.scale;
+        self.offset.1 = (self.offset.1 * self.scale).round() / self.scale;
     }
 
     fn draw(&self) {
@@ -115,10 +137,9 @@ impl Game {
             .board
             .cells()
             .map(|cell| {
-                #[allow(clippy::cast_precision_loss)]
                 shapes::draw_rectangle(
-                    self.scale * f32::from(cell.x),
-                    self.scale * f32::from(cell.y),
+                    (f32::from(cell.x) - self.offset.0) * self.scale,
+                    (f32::from(cell.y) - self.offset.1) * self.scale,
                     self.scale,
                     self.scale,
                     WHITE,
@@ -130,8 +151,9 @@ impl Game {
         text::draw_text(&format!("Time: {}", self.board.time()), 0., 24., 16., GRAY);
         text::draw_text(&format!("Population: {population}"), 0., 36., 16., GRAY);
         text::draw_text(&format!("Scale: {}", self.scale), 0., 48., 16., GRAY);
+        text::draw_text(&format!("Position: {:?}", self.offset), 0., 60., 16., GRAY);
         if self.paused {
-            text::draw_text("[Paused]", 0., 60., 16., GRAY);
+            text::draw_text("[Paused]", 0., 72., 16., GRAY);
         }
     }
 
