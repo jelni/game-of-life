@@ -84,4 +84,20 @@ impl Board {
     pub fn time(&self) -> u32 {
         self.time
     }
+
+    pub fn to_vec(&self) -> Vec<Point> {
+        self.cells().collect()
+    }
+}
+
+impl From<Vec<Point>> for Board {
+    fn from(value: Vec<Point>) -> Self {
+        let mut board = Self::new();
+
+        for point in value {
+            board.set_cell(point, true);
+        }
+
+        board
+    }
 }

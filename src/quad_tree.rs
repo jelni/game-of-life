@@ -65,7 +65,7 @@ impl<T: Copy> PointQuadtree<T> {
             let index = point.child_index(position);
 
             if point.children[index].is_some() {
-                point = point.children.get_mut(index).unwrap().as_mut().unwrap();
+                point = point.children[index].as_mut().unwrap();
             } else {
                 point.children[index] = Some(Self::new(position, value));
             }

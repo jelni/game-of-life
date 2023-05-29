@@ -23,7 +23,7 @@ pub struct Game {
     paused: bool,
     scale: f32,
     board: Board,
-    last_states: VecDeque<Board>,
+    last_states: VecDeque<Vec<Point>>,
 }
 
 impl Game {
@@ -66,8 +66,7 @@ impl Game {
     fn handle_input(&mut self) {
         if input::is_key_pressed(KeyCode::Space) {
             if self.paused {
-                self.last_states.push_front(self.board.clone());
-                self.last_states.truncate(64);
+                self.add_board_history(self.board.to_vec());
             }
 
             self.paused = !self.paused;
@@ -76,14 +75,14 @@ impl Game {
         if self.paused && input::is_key_pressed(KeyCode::N) {
             let mut board = self.board.next_state();
             mem::swap(&mut board, &mut self.board);
-            self.last_states.push_front(board);
+            self.add_board_history(board.to_vec());
         }
 
         if input::is_key_pressed(KeyCode::Z) && input::is_key_down(KeyCode::LeftControl)
             || input::is_key_down(KeyCode::RightControl)
         {
             if let Some(last_state) = self.last_states.pop_front() {
-                self.board = last_state;
+                self.board = last_state.into();
                 self.paused = true;
             }
         }
@@ -134,5 +133,10 @@ impl Game {
         if self.paused {
             text::draw_text("[Paused]", 0., 60., 16., GRAY);
         }
+    }
+
+    fn add_board_history(&mut self, board: Vec<Point>) {
+        self.last_states.push_front(board);
+        self.last_states.truncate(64);
     }
 }
