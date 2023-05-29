@@ -73,7 +73,9 @@ impl Board {
                 Ordering::Greater => count == 3,
             };
 
-            new_board.set_cell(position, value);
+            if value {
+                new_board.set_cell(position, true);
+            }
         }
 
         new_board
