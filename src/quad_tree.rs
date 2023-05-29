@@ -1,4 +1,4 @@
-use std::iter;
+use std::collections::VecDeque;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Point {
@@ -32,49 +32,55 @@ impl<T: Copy> PointQuadtree<T> {
     }
 
     pub fn get(&self, position: Point) -> Option<T> {
-        if position == self.position {
-            return Some(self.value);
+        let mut point = self;
+
+        while point.position != position {
+            let index = point.child_index(position);
+            point = point.children[index].as_ref()?;
         }
 
-        let index = self.child_index(position);
-        self.children[index].as_ref()?.get(position)
+        Some(point.value)
     }
 
     pub fn get_mut(&mut self, position: Point) -> Option<&mut T> {
-        if position == self.position {
-            return Some(&mut self.value);
+        let mut point = self;
+
+        while point.position != position {
+            let index = point.child_index(position);
+            point = point.children[index].as_mut()?;
         }
 
-        let index = self.child_index(position);
-        self.children[index].as_mut()?.get_mut(position)
+        Some(&mut point.value)
     }
 
     pub fn insert(&mut self, position: Point, value: T) {
-        if position == self.position {
-            self.value = value;
-            return;
-        }
+        let mut point = self;
 
-        let index = self.child_index(position);
-
-        match self.children.get_mut(index).unwrap() {
-            Some(child) => {
-                child.insert(position, value);
+        loop {
+            if point.position == position {
+                point.value = value;
+                break;
             }
-            None => {
-                self.children[index] = Some(Self::new(position, value));
+
+            let index = point.child_index(position);
+
+            if point.children[index].is_some() {
+                point = point.children.get_mut(index).unwrap().as_mut().unwrap();
+            } else {
+                point.children[index] = Some(Self::new(position, value));
             }
         }
     }
 
-    pub fn all_nodes(&self) -> Vec<(Point, T)> {
-        iter::once((self.position, self.value))
-            .chain(
-                self.children
-                    .iter()
-                    .flatten()
-                    .flat_map(PointQuadtree::all_nodes),
-            )
-            .collect()
+    pub fn all_points(&self) -> Vec<(Point, T)> {
+        let mut points = Vec::new();
+        let mut nodes = self.children.iter().flatten().collect::<VecDeque<_>>();
+
+        while let Some(node) = nodes.pop_front() {
+            points.push((node.position, node.value));
+            nodes.extend(node.children.iter().flatten());
+        }
+
+        points
     }
 }

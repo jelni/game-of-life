@@ -62,7 +62,7 @@ impl Board {
 
         let mut new_board = Board::new_with_time(self.time + 1);
 
-        for (position, count) in counts.all_nodes() {
+        for (position, count) in counts.all_points() {
             if count == 0 {
                 continue;
             }
@@ -83,7 +83,7 @@ impl Board {
 
     pub fn cells(&self) -> impl Iterator<Item = Point> {
         self.state
-            .all_nodes()
+            .all_points()
             .into_iter()
             .filter(|(_, value)| *value)
             .map(|(position, _)| position)
