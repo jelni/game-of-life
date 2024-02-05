@@ -52,7 +52,7 @@ impl Board {
             }
         }
 
-        let mut new_board = Board::new_with_time(self.time + 1);
+        let mut new_board = Self::new_with_time(self.time + 1);
 
         for (position, count) in counts.all_points() {
             if count == 0 {
@@ -81,23 +81,30 @@ impl Board {
             .map(|(position, _)| position)
     }
 
-    pub fn time(&self) -> u32 {
+    pub const fn time(&self) -> u32 {
         self.time
-    }
-
-    pub fn to_vec(&self) -> Vec<Point> {
-        self.cells().collect()
     }
 }
 
-impl From<Vec<Point>> for Board {
-    fn from(value: Vec<Point>) -> Self {
-        let mut board = Self::new();
-
-        for point in value {
-            board.set_cell(point, true);
+impl From<&State> for Board {
+    fn from(state: &State) -> Self {
+        Self {
+            time: state.time,
+            state: state.points.as_slice().into(),
         }
+    }
+}
 
-        board
+pub struct State {
+    time: u32,
+    points: Vec<Point>,
+}
+
+impl From<&Board> for State {
+    fn from(board: &Board) -> Self {
+        Self {
+            time: board.time,
+            points: board.cells().collect(),
+        }
     }
 }

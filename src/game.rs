@@ -4,7 +4,7 @@ use std::mem;
 use macroquad::prelude::{KeyCode, MouseButton, GRAY, WHITE};
 use macroquad::{input, shapes, text, time, window};
 
-use crate::board::Board;
+use crate::board::{Board, State};
 use crate::quad_tree::Point;
 
 const GLIDER_GUN: [&[i16]; 9] = [
@@ -25,7 +25,7 @@ pub struct Game {
     scale: f32,
     previous_mouse_position: (f32, f32),
     board: Board,
-    last_states: VecDeque<Vec<Point>>,
+    last_states: VecDeque<State>,
 }
 
 impl Game {
@@ -70,7 +70,7 @@ impl Game {
     fn handle_input(&mut self) {
         if input::is_key_pressed(KeyCode::Space) {
             if self.paused {
-                self.add_board_history(self.board.to_vec());
+                self.add_board_history((&self.board).into());
             }
 
             self.paused = !self.paused;
@@ -79,14 +79,15 @@ impl Game {
         if self.paused && input::is_key_pressed(KeyCode::N) {
             let mut board = self.board.next_state();
             mem::swap(&mut board, &mut self.board);
-            self.add_board_history(board.to_vec());
+            self.add_board_history((&board).into());
         }
 
-        if input::is_key_pressed(KeyCode::Z) && input::is_key_down(KeyCode::LeftControl)
-            || input::is_key_down(KeyCode::RightControl)
+        if input::is_key_pressed(KeyCode::Z)
+            && (input::is_key_down(KeyCode::LeftControl)
+                || input::is_key_down(KeyCode::RightControl))
         {
             if let Some(last_state) = self.last_states.pop_front() {
-                self.board = last_state.into();
+                self.board = (&last_state).into();
                 self.paused = true;
             }
         }
@@ -157,8 +158,8 @@ impl Game {
         }
     }
 
-    fn add_board_history(&mut self, board: Vec<Point>) {
-        self.last_states.push_front(board);
+    fn add_board_history(&mut self, state: State) {
+        self.last_states.push_front(state);
         self.last_states.truncate(64);
     }
 }

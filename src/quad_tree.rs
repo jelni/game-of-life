@@ -22,7 +22,7 @@ impl<T: Copy> PointQuadtree<T> {
         }
     }
 
-    fn child_index(&self, position: Point) -> usize {
+    const fn child_index(&self, position: Point) -> usize {
         match (position.x < self.position.x, position.y < self.position.y) {
             (true, true) => 0,
             (true, false) => 1,
@@ -82,5 +82,17 @@ impl<T: Copy> PointQuadtree<T> {
         }
 
         points
+    }
+}
+
+impl From<&[Point]> for PointQuadtree<bool> {
+    fn from(points: &[Point]) -> Self {
+        let mut tree = Self::new(Point { x: 0, y: 0 }, false);
+
+        for &point in points {
+            tree.insert(point, true);
+        }
+
+        tree
     }
 }

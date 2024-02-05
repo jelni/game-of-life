@@ -1,5 +1,3 @@
-#![warn(clippy::pedantic)]
-
 use game::Game;
 use macroquad::window::Conf;
 use macroquad::Window;
